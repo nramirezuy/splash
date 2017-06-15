@@ -147,6 +147,20 @@ To enable response content tracking per-request call
 :ref:`splash-request-enable-response-body` in a :ref:`splash-on-request`
 callback.
 
+.. _splash-indexeddb-enabled:
+
+splash.indexeddb_enabled
+------------------------
+
+Enable or disable IndexedDB_.
+
+**Signature:** ``splash.indexeddb_enabled = true/false``
+
+IndexedDB is enabled by default. Use ``splash.indexeddb_enabled = false``
+to disable it.
+
+.. _IndexedDB: https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API
+
 Methods
 ~~~~~~~
 

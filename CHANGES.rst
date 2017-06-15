@@ -36,6 +36,8 @@ Other changes:
   with Lua ``assert``, so now a string with an error message is returned
   instead. It was always documented that a string is returned by splash:runjs
   as a second value when error happens.
+* IndexedDB is enabled by default; to turn it off set
+  :ref:`splash-indexeddb-enabled` attribute to ``false``.
 * Documentation and testing improvements.
 
 
