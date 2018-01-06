@@ -4,15 +4,18 @@ exposed to the user).
 """
 import os
 import gc
+import re
 import time
 import json
 import resource
 
-from twisted.web.server import NOT_DONE_YET
-from twisted.web.resource import Resource
-from twisted.web.static import File
+import six
+from PyQt5.QtWebKit import QWebSettings
 from twisted.internet import reactor, defer
 from twisted.python import log
+from twisted.web.resource import Resource
+from twisted.web.server import NOT_DONE_YET
+from twisted.web.static import File
 
 import splash
 from splash.argument_cache import ArgumentCache
@@ -394,6 +397,35 @@ class PingResource(Resource):
         }, sort_keys=True)).encode('utf-8')
 
 
+class CacheControlResource(Resource):
+    isLeaf = True
+    content_type = "application/json"
+
+    def render_POST(self, request):
+        for key, pattern in (
+                ('max_pages', r'^\d+$'),
+                ('object_capacities', r'^\d+,\d+,\d+$')
+        ):
+            if request.args.get(key):
+                data = ''.join(request.args[key])
+                if not re.match(pattern, data):
+                    request.setResponseCode(400)
+                    return json.dumps({
+                        'status': 'error',
+                        'key': key,
+                        'supported_format': pattern,
+                        'received': data,
+                    })
+        if request.args.get('max_pages'):
+            data = ''.join(request.args['max_pages'])
+            QWebSettings.setMaximumPagesInCache(int(data))
+        if request.args.get('object_capacities'):
+            data = ''.join(request.args['object_capacities']).split(',')
+            QWebSettings.setObjectCacheCapacities(*[int(x) for x in data])
+        return json.dumps({
+            "status": "ok",
+        }).encode('utf-8')
+
 
 HARVIEWER_PATH = 'harviewer-2.0.17a' # Change to invalidate cache when updating harviewer
 BOOTSTRAP_THEME = 'simplex'
@@ -580,6 +612,7 @@ class Root(Resource):
         self.putChild(b"_debug", DebugResource(pool, self.argument_cache))
         self.putChild(b"_gc", ClearCachesResource(self.argument_cache))
         self.putChild(b"_ping", PingResource())
+        self.putChild(b"_cache_control", CacheControlResource())
 
         # backwards compatibility
         self.putChild(b"debug", DebugResource(pool, self.argument_cache, warn=True))
